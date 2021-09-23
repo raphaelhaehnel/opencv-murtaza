@@ -11,8 +11,11 @@ import cv2
 import numpy as np
 import requests
 
-CAMERA_URL = "http://192.168.1.2:8080/shot.jpg"
+CAMERA_URL = "http://192.168.1.3:8080/shot.jpg"
 DEBUG = True
+BLUE = (255, 0, 0)
+GREEN = (0, 255, 0)
+RED = (0, 0, 255)
 
 
 def empty():
@@ -37,7 +40,7 @@ def init_trackbar():
     cv2.createTrackbar("Val Max", "TrackBars", 255, 255, empty)
 
 
-def detect_color(img):
+def get_trackbar_parameters():
     """ By given an image and the parameters of the trackbar, apply a filter for the color range specified by the
     trackbar.
     :param img: The input image
@@ -51,14 +54,7 @@ def detect_color(img):
     v_min = cv2.getTrackbarPos("Val Min", "TrackBars")
     v_max = cv2.getTrackbarPos("Val Max", "TrackBars")
 
-    imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-    lower = np.array([h_min, s_min, v_min])
-    upper = np.array([h_max, s_max, v_max])
-    mask = cv2.inRange(imgHSV, lower, upper)
-
-    imgResult = cv2.bitwise_and(img, img, mask=mask)
-    return imgResult
+    return (h_min, h_max), (s_min, s_max), (v_min, v_max)
 
 
 def apply_hsv_and(img, h, s, v):
@@ -97,6 +93,16 @@ def detect_shape(img, drawer, color):
         cv2.circle(drawer, (minGlobal[0, 0], minGlobal[0, 1]), 10, color, 20)
 
 
+def get_camera(url):
+    """ Read the image from the url
+    :param url: the link to the image
+    :return: The image from the url
+    """
+    img_resp = requests.get(url)
+    img_arr = np.array(bytearray(img_resp.content), dtype=np.uint8)
+    return cv2.imdecode(img_arr, -1)
+
+
 if __name__ == '__main__':
 
     if DEBUG:
@@ -104,20 +110,19 @@ if __name__ == '__main__':
         init_trackbar()
 
     # Get the first image
-    img_resp = requests.get(CAMERA_URL)
-    img_arr = np.array(bytearray(img_resp.content), dtype=np.uint8)
-    img = cv2.imdecode(img_arr, -1)
+    img = get_camera(CAMERA_URL)
+
     img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
     dims = img.shape
     img = cv2.resize(img, (dims[1]//2, dims[0]//2))
+
+    # Create a black image
     imgPaint = np.zeros_like(img)
 
     while True:
 
         # Get the image from Android
-        img_resp = requests.get(CAMERA_URL)
-        img_arr = np.array(bytearray(img_resp.content), dtype=np.uint8)
-        img = cv2.imdecode(img_arr, -1)
+        img = get_camera(CAMERA_URL)
 
         # Rotate and resize the image
         dims = img.shape
@@ -126,7 +131,8 @@ if __name__ == '__main__':
 
         if DEBUG:
             # Apply the function inRange to the image according to the Trackbar
-            imgDebug = detect_color(img)
+            h, s, v = get_trackbar_parameters()
+            imgDebug = apply_hsv_and(img, h, s, v)
             cv2.imshow("Debug", imgDebug)
 
         # Create three images according to three specific sets of threshold
@@ -134,9 +140,10 @@ if __name__ == '__main__':
         imgr = apply_hsv_and(img, (0, 16), (167, 255), (0, 255))
         imgg = apply_hsv_and(img, (70, 98), (80, 255), (0, 255))
 
-        detect_shape(imgb, imgPaint, (255, 0, 0))
-        detect_shape(imgg, imgPaint, (0, 255, 0))
-        detect_shape(imgr, imgPaint, (0, 0, 255))
+        # Draw on the imgPaint according to the three images
+        detect_shape(imgb, imgPaint, BLUE)
+        detect_shape(imgg, imgPaint, GREEN)
+        detect_shape(imgr, imgPaint, RED)
 
         imgResult = cv2.addWeighted(img, 1, imgPaint, 1, 0.0)
 
