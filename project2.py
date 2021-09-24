@@ -48,7 +48,6 @@ def getContours(img, imgContour):
 
         if DEBUG:
             for i in range(4):
-                print(biggest[i, 0])
                 cv2.line(imgContour, biggest[i, 0], biggest[(i+1)%4, 0], (0, 255, 0), thickness=3)
             for pt in biggest:
                 cv2.circle(imgContour, (pt[0, 0], pt[0, 1]), 10, (0, 0, 255), 20)
@@ -111,7 +110,8 @@ def init_trackbar():
     cv2.namedWindow("TrackBars")
     cv2.resizeWindow("TrackBars", 640, 240)
 
-    cv2.createTrackbar("Canny", "TrackBars", 83, 500, empty)
+    cv2.createTrackbar("Canny1", "TrackBars", 83, 500, empty)
+    cv2.createTrackbar("Canny2", "TrackBars", 190, 500, empty)
 
 
 def get_trackbar_parameters():
@@ -121,7 +121,9 @@ def get_trackbar_parameters():
     :return: The filtered image
     """
 
-    return cv2.getTrackbarPos("Canny", "TrackBars")
+    n1 = cv2.getTrackbarPos("Canny1", "TrackBars")
+    n2 = cv2.getTrackbarPos("Canny2", "TrackBars")
+    return n1, n2
 
 
 if __name__ == '__main__':
@@ -140,8 +142,8 @@ if __name__ == '__main__':
 
         imgBlur = cv2.GaussianBlur(imgGray, (7, 7), 1)
 
-        n = get_trackbar_parameters()
-        imgCanny = cv2.Canny(imgBlur, n, n)
+        n1, n2 = get_trackbar_parameters()
+        imgCanny = cv2.Canny(imgBlur, n1, n1)
 
         # Increase the thickness of our edge
         imgDilation = cv2.dilate(imgCanny, KERNEL, iterations=1)
@@ -154,14 +156,17 @@ if __name__ == '__main__':
         imgContours = img.copy()
         pts = getContours(imgDilation, imgContours)
 
-
         if pts is not None:
-            print("pts: ", [pts[0],pts[1],pts[2],pts[3]])
             imgDoc = warp_perspective(img, pts)
         else:
             imgDoc = np.zeros_like(img)
 
-        imgStacked = stackImages(0.4, ([img, imgBlur, imgCanny], [imgContours, imgDilation, imgDoc]))
+        imgDocGray = cv2.cvtColor(imgDoc, cv2.COLOR_BGR2GRAY)
+        # (thresh, im_bw) = cv2.threshold(imgDocGray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        im_bw = cv2.threshold(imgDocGray, n2, 255, cv2.THRESH_BINARY)[1]
+
+        imgStacked = stackImages(0.4, ([img, imgDocGray, im_bw], [imgContours, imgDilation, imgDoc]))
+        # print(thresh)
 
         cv2.imshow("Video", imgStacked)
 
