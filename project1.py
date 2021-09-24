@@ -90,7 +90,6 @@ def detect_shape(img, drawer, color):
     if contours:
         minLocal = min(contours, key=lambda item: item[0, 0, 1])
         minGlobal = min(minLocal, key=lambda item: item[0, 1])
-        cv2.circle(drawer, (minGlobal[0, 0], minGlobal[0, 1]), 10, color, 20)
 
 
 def get_camera(url):
