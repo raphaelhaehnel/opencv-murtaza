@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 
-print("Package imported ")
-
 
 def webcam_detection():
     faceCascade = cv2.CascadeClassifier("resources/haarcascades/haarcascade_frontalface_default.xml")
@@ -297,4 +295,6 @@ def import_image():
     cv2.waitKey(0)
 
 
-detect_shape()
+if __name__ == '__main__':
+    print("Package imported ")
+    detect_shape()
