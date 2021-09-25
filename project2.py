@@ -16,16 +16,9 @@ CAMERA = True
 
 KERNEL = np.ones((5, 5), np.uint8)
 CAMERA_URL = "http://192.168.1.3:8080/shot.jpg"
-
+X = 0
+Y = 1
 DEBUG = True
-
-
-def get_camera():
-    cap = cv2.VideoCapture(0)
-    cap.set(3, 640)
-    cap.set(3, 480)
-    cap.set(10, 100)
-    return cap
 
 
 def getContours(img, imgContour):
@@ -52,6 +45,8 @@ def getContours(img, imgContour):
             for pt in biggest:
                 cv2.circle(imgContour, (pt[0, 0], pt[0, 1]), 10, (0, 0, 255), 20)
 
+        biggest = reorder(biggest)
+
     return biggest
 
 
@@ -73,16 +68,18 @@ def warp_perspective(img, pts):
     :param pts: An array of 4 sets of points
     :return: An image with the new perspective
     """
-    width, height = 250, 350
+    imgOutput = np.zeros_like(img)
+    if pts is not None:
+        width, height = 400, 600
 
-    pts = reorder(pts)
-    pts1 = np.float32(pts)
+        pts1 = np.float32(pts)
 
-    # pts1 = np.float32(pts)
-    pts2 = np.float32([[0,0],[width,0],[0,height],[width,height]])
+        # pts1 = np.float32(pts)
+        pts2 = np.float32([[0,0],[width,0],[0,height],[width,height]])
 
-    matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    imgOutput = cv2.warpPerspective(img, matrix, (width, height))
+        matrix = cv2.getPerspectiveTransform(pts1, pts2)
+        imgOutput = cv2.warpPerspective(img, matrix, (width, height))
+
     return imgOutput
 
 
@@ -139,7 +136,6 @@ if __name__ == '__main__':
         img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
 
         imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
         imgBlur = cv2.GaussianBlur(imgGray, (7, 7), 1)
 
         n1, n2 = get_trackbar_parameters()
@@ -151,24 +147,20 @@ if __name__ == '__main__':
         # Make the lines thiner
         imgEroded = cv2.erode(imgDilation, KERNEL, iterations=1)
 
+        # Create a black image
         imgBlank = np.zeros_like(img)
 
         imgContours = img.copy()
         pts = getContours(imgDilation, imgContours)
-
-        if pts is not None:
-            imgDoc = warp_perspective(img, pts)
-        else:
-            imgDoc = np.zeros_like(img)
+        imgDoc = warp_perspective(img, pts)
 
         imgDocGray = cv2.cvtColor(imgDoc, cv2.COLOR_BGR2GRAY)
-        # (thresh, im_bw) = cv2.threshold(imgDocGray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
         im_bw = cv2.threshold(imgDocGray, n2, 255, cv2.THRESH_BINARY)[1]
 
-        imgStacked = stackImages(0.4, ([img, imgDocGray, im_bw], [imgContours, imgDilation, imgDoc]))
-        # print(thresh)
+        imgStacked = stackImages(0.4, ([img, im_bw], [imgContours, imgDilation]))
 
         cv2.imshow("Video", imgStacked)
+        cv2.imshow("Result", imgDoc)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
