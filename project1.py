@@ -11,7 +11,7 @@ import cv2
 import numpy as np
 import requests
 
-CAMERA_URL = "http://192.168.1.3:8080/shot.jpg"
+CAMERA_URL = "http://192.168.1.12:8080/shot.jpg"
 DEBUG = True
 BLUE = (255, 0, 0)
 GREEN = (0, 255, 0)

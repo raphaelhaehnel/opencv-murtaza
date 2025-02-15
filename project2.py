@@ -15,7 +15,7 @@ from murtazaIntro import stackImages
 CAMERA = True
 
 KERNEL = np.ones((5, 5), np.uint8)
-CAMERA_URL = "http://192.168.1.3:8080/shot.jpg"
+CAMERA_URL = "http://10.1.32.18:8080/shot.jpg"
 X = 0
 Y = 1
 DEBUG = True
@@ -127,8 +127,20 @@ if __name__ == '__main__':
 
     init_trackbar()
 
+    cap = cv2.VideoCapture(0)
+
+    # Define the width which is index 3 at 640
+    cap.set(3, 640)
+
+    # Define the height which is index 4 at 480
+    cap.set(3, 480)
+
+    # Define the brightness which is index 10 at 100
+    cap.set(10, 100)
+
     while True:
-        img = get_camera_android(CAMERA_URL)
+        # img = get_camera_android(CAMERA_URL)
+        success, img = cap.read()
 
         # Rotate and resize the image
         dims = img.shape
