@@ -1,7 +1,7 @@
 # Learning OpenCV
 
 - This code is my implementation of the Virtual Paint and the Document Scanner, two project proposed by Murtaza Hassan from Murtaza's Workshop.
-- [Link](https://www.youtube.com/watch?v=WQeoO7MI0Bs) the the Youtube video.
+- [Link](https://www.youtube.com/watch?v=WQeoO7MI0Bs) the the YouTube video.
 - For these projects, you'll need the application "IP Webcam" to get a camera stream from your phone.
 
 ### Project 1 - Virtual Paint
